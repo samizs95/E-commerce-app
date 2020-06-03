@@ -7,9 +7,9 @@ import ShopPage from "./pages/shop/shop.component";
 import Header from "./components/header/header.component";
 import SignInandSignUpPage from './pages/signin-and-signup/signin-and-signup.component';
 
-import {auth} from './Firebase/firebase.utils';
+import {auth,createUserProfileDocument} from './Firebase/firebase.utils';
 
-
+//modified to class from function when we started to use GoogleAuth and sign in in order to store users logged in
 class App extends React.Component {
   constructor(){
     super();
@@ -22,11 +22,22 @@ class App extends React.Component {
   unsubscribeFromAuth = null;
 
   componentDidMount(){
-    this.unsubscribeFromAuth = auth.onAuthStateChanged( user => {
-      this.setState({currentUser: user});
+    this.unsubscribeFromAuth = auth.onAuthStateChanged(async userAuth => {
+      if(userAuth){
+        const userRef = await createUserProfileDocument(userAuth);
 
-      console.log(user);
-    })
+        userRef.onSnapshot(snapShot => {
+          this.setState({
+            currentUser:{
+              id: snapShot.id,
+              ...snapShot.data()
+            }
+          });
+          console.log(this.state);
+        })
+      }
+      this.setState({currentUser:userAuth})
+    });
   }
 
   componentWillUnmount(){
